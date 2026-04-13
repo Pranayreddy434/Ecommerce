@@ -5,7 +5,13 @@ pipeline {
         COMPOSE_FILE = 'docker/docker-compose.yml'
     }
 
+    options {
+        timestamps()          // show timestamps in logs
+        skipDefaultCheckout() // avoid duplicate checkout
+    }
+
     stages {
+
         stage('Clone Repository') {
             steps {
                 checkout scm
@@ -15,7 +21,7 @@ pipeline {
         stage('Build Backend') {
             steps {
                 dir('backend') {
-                    bat 'mvn -q -DskipTests clean package'
+                    bat 'mvn clean package -DskipTests'
                 }
             }
         }
@@ -29,22 +35,41 @@ pipeline {
             }
         }
 
+        stage('Stop Old Containers') {
+            steps {
+                bat "docker compose -f %COMPOSE_FILE% down"
+            }
+        }
+
         stage('Build Docker Images') {
             steps {
-                bat "docker compose -f ${COMPOSE_FILE} build"
+                bat "docker compose -f %COMPOSE_FILE% build"
             }
         }
 
         stage('Run Containers') {
             steps {
-                bat "docker compose -f ${COMPOSE_FILE} up -d"
+                bat "docker compose -f %COMPOSE_FILE% up -d"
+            }
+        }
+
+        stage('Verify Containers') {
+            steps {
+                bat "docker compose -f %COMPOSE_FILE% ps"
             }
         }
     }
 
     post {
+        success {
+            echo '✅ Deployment Successful!'
+        }
+        failure {
+            echo '❌ Deployment Failed!'
+        }
         always {
-            bat "docker compose -f ${COMPOSE_FILE} ps || true"
+            echo '📦 Cleaning workspace...'
+            cleanWs()
         }
     }
 }
