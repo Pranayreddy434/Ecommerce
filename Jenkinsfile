@@ -66,9 +66,5 @@ pipeline {
         failure {
             echo '❌ Deployment Failed!'
         }
-        always {
-            echo '📦 Cleaning workspace...'
-            cleanWs()
-        }
     }
 }
