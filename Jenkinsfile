@@ -6,8 +6,7 @@ pipeline {
     }
 
     options {
-        timestamps()          // show timestamps in logs
-        skipDefaultCheckout() // avoid duplicate checkout
+        skipDefaultCheckout()
     }
 
     stages {
